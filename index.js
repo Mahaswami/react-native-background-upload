@@ -17,7 +17,7 @@ export type StartUploadArgs = {
   notification?: NotificationArgs
 }
 
-const NativeModule = NativeModules.VydiaRNFileUploader || NativeModules.RNFileUploader // iOS is VydiaRNFileUploader and Android is NativeModules 
+const NativeModule = NativeModules.VydiaRNFileUploader || NativeModules.RNFileUploader // iOS is VydiaRNFileUploader and Android is NativeModules
 const eventPrefix = 'RNFileUploader-'
 
 // for IOS, register event listeners or else they don't fire on DeviceEventEmitter
@@ -50,7 +50,7 @@ export const getFileInfo = (path: string): Promise<Object> => {
 }
 
 /*
-Starts uploading a file to an HTTP endpoint.  
+Starts uploading a file to an HTTP endpoint.
 Options object:
 {
   url: string.  url to post to.
@@ -66,10 +66,12 @@ Returns a promise with the string ID of the upload.  Will reject if there is a c
 It is recommended to add listeners in the .then of this promise.
 
 */
-export const startUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startUpload(options)
+// export const startUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startUpload(options)
+export const startFormUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startFormUpload(options)
+
 
 /*
-Listens for the given event on the given upload ID (resolved from startUpload).  
+Listens for the given event on the given upload ID (resolved from startUpload).
 If you don't supply a value for uploadId, the event will fire for all uploads.
 Events (id is always the upload ID):
   progress - { id: string, progress: int (0-100) }
@@ -84,4 +86,4 @@ export const addListener = (eventType: UploadEvent, uploadId: string, listener: 
   })
 }
 
-export default { startUpload, addListener, getFileInfo }
+export default { startFormUpload, addListener, getFileInfo }
