@@ -67,7 +67,7 @@ It is recommended to add listeners in the .then of this promise.
 
 */
 export const startUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startUpload(options)
-export const startFormUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startFormUpload(options)
+// export const startFormUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startFormUpload(options)
 
 
 /*
@@ -86,5 +86,5 @@ export const addListener = (eventType: UploadEvent, uploadId: string, listener: 
   })
 }
 
-export default { startFormUpload, addListener, getFileInfo }
+// export default { startFormUpload, addListener, getFileInfo }
 export default { startUpload, addListener, getFileInfo }
