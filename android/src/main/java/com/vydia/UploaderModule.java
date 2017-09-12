@@ -203,4 +203,96 @@ public class UploaderModule extends ReactContextBaseJavaModule {
         promise.reject(exc);
       }
     }
+
+      @ReactMethod
+      public void startUpload(ReadableMap options, final Promise promise) {
+        for (String key : new String[]{"url", "path"}) {
+          if (!options.hasKey(key)) {
+            promise.reject(new IllegalArgumentException("Missing '" + key + "' field."));
+            return;
+          }
+          if (options.getType(key) != ReadableType.String) {
+            promise.reject(new IllegalArgumentException(key + " must be a string."));
+            return;
+          }
+        }
+        if (options.hasKey("headers") && options.getType("headers") != ReadableType.Map) {
+          promise.reject(new IllegalArgumentException("headers must be a hash."));
+          return;
+        }
+        if (options.hasKey("notification") && options.getType("notification") != ReadableType.Map) {
+          promise.reject(new IllegalArgumentException("notification must be a hash."));
+          return;
+        }
+
+        WritableMap notification = new WritableNativeMap();
+        notification.putBoolean("enabled", true);
+        if (options.hasKey("notification")) {
+          notification.merge(options.getMap("notification"));
+        }
+
+        String url = options.getString("url");
+        String filePath = options.getString("path");
+        String method = options.hasKey("method") && options.getType("method") == ReadableType.String ? options.getString("method") : "POST";
+        final String customUploadId = options.hasKey("customUploadId") && options.getType("method") == ReadableType.String ? options.getString("customUploadId") : null;
+        try {
+          final BinaryUploadRequest request = (BinaryUploadRequest) new BinaryUploadRequest(this.getReactApplicationContext(), url)
+                  .setMethod(method)
+                  .setFileToUpload(filePath)
+                  .setMaxRetries(2)
+                  .setDelegate(new UploadStatusDelegate() {
+                    @Override
+                    public void onProgress(Context context, UploadInfo uploadInfo) {
+                      WritableMap params = Arguments.createMap();
+                      params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
+                      params.putInt("progress", uploadInfo.getProgressPercent()); //0-100
+                      sendEvent("progress", params);
+                    }
+
+                    @Override
+                    public void onError(Context context, UploadInfo uploadInfo, Exception exception) {
+                      WritableMap params = Arguments.createMap();
+                      params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
+                      params.putString("error", exception.getMessage());
+                      sendEvent("error", params);
+                    }
+
+                    @Override
+                    public void onCompleted(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
+                      WritableMap params = Arguments.createMap();
+                      params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
+                      params.putInt("responseCode", serverResponse.getHttpCode());
+                      params.putString("responseBody", serverResponse.getBodyAsString());
+                      sendEvent("completed", params);
+                    }
+
+                    @Override
+                    public void onCancelled(Context context, UploadInfo uploadInfo) {
+                      WritableMap params = Arguments.createMap();
+                      params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
+                      sendEvent("cancelled", params);
+                    }
+                  });
+          if (notification.getBoolean("enabled")) {
+            request.setNotificationConfig(new UploadNotificationConfig());
+          }
+          if (options.hasKey("headers")) {
+            ReadableMap headers = options.getMap("headers");
+            ReadableMapKeySetIterator keys = headers.keySetIterator();
+            while (keys.hasNextKey()) {
+              String key = keys.nextKey();
+              if (headers.getType(key) != ReadableType.String) {
+                promise.reject(new IllegalArgumentException("Headers must be string key/values.  Value was invalid for '" + key + "'"));
+                return;
+              }
+              request.addHeader(key, headers.getString(key));
+            }
+          }
+          String uploadId = request.startUpload();
+          promise.resolve(customUploadId != null ? customUploadId : uploadId);
+        } catch (Exception exc) {
+          Log.e(TAG, exc.getMessage(), exc);
+          promise.reject(exc);
+        }
+      }
 }

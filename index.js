@@ -66,7 +66,7 @@ Returns a promise with the string ID of the upload.  Will reject if there is a c
 It is recommended to add listeners in the .then of this promise.
 
 */
-// export const startUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startUpload(options)
+export const startUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startUpload(options)
 export const startFormUpload = (options: StartUploadArgs): Promise<string> => NativeModule.startFormUpload(options)
 
 
@@ -87,3 +87,4 @@ export const addListener = (eventType: UploadEvent, uploadId: string, listener: 
 }
 
 export default { startFormUpload, addListener, getFileInfo }
+export default { startUpload, addListener, getFileInfo }
